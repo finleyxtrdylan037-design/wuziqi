@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>五子棋</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #d9bf8c;
+  background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.15) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 70%, rgba(139,90,43,0.18) 0%, transparent 50%);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #4a2c1a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+#app {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ===== 信息栏 ===== */
+.info-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #fff4d6 0%, #f3e0a8 100%);
+  border: 2px solid #b8894a;
+  border-radius: 30px;
+  padding: 4px 14px 4px 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  min-width: 0;
+  flex: 1;
+  max-width: 45%;
+}
+
+.player-card.right {
+  flex-direction: row-reverse;
+  padding: 4px 4px 4px 14px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #b8894a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.player-card.right .avatar {
+  background: #f0f0f0;
+}
+
+.player-name {
+  margin: 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a2c1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.turn-indicator {
+  flex-shrink: 0;
+  width: 44px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.turn-stone {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: inset -2px -2px 4px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.3);
+  transition: all 0.3s;
+}
+
+.turn-stone.black {
+  background: radial-gradient(circle at 35% 35%, #555 0%, #000 70%);
+}
+
+.turn-stone.white {
+  background: radial-gradient(circle at 35% 35%, #fff 0%, #d0d0d0 70%);
+  border: 1px solid #999;
+}
+
+.turn-arrow {
+  position: absolute;
+  color: #c89550;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.turn-arrow.left {
+  left: -8px;
+}
+
+.turn-arrow.right {
+  right: -8px;
+}
+
+/* ===== 棋盘区 ===== */
+.board-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  min-height: 0;
+  position: relative;
+}
+
+.board-wrap {
+  position: relative;
+  background: linear-gradient(135deg, #e8c789 0%, #d4a860 100%);
+  border: 3px solid #8b5a2b;
+  border-radius: 8px;
+  padding: 4%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 0 20px rgba(139,90,43,0.15);
+  aspect-ratio: 1;
+}
+
+#board {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* ===== 控制按钮 ===== */
+.control-bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 10px 12px 14px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ctrl-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #fff4d6 0%, #e8c080 100%);
+  border: 2px solid #b8894a;
+  border-radius: 50%;
+  width: 58px;
+  height: 58px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b3e1a;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2), inset 0 -2px 4px rgba(139,90,43,0.2);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.ctrl-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2), inset 0 -1px 2px rgba(139,90,43,0.2);
+}
+
+.ctrl-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ctrl-btn .icon {
+  font-size: 20px;
+  margin-bottom: 2px;
+  line-height: 1;
+}
+
+/* ===== 弹窗 ===== */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.overlay.show {
+  display: flex;
+}
+
+.modal {
+  background: linear-gradient(180deg, #fff8e4 0%, #f3dfa0 100%);
+  border: 3px solid #8b5a2b;
+  border-radius: 16px;
+  padding: 20px 24px 24px;
+  width: 100%;
+  max-width: 340px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  position: relative;
+}
+
+.modal-header {
+  position: relative;
+  margin-top: -32px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.modal-title {
+  background: linear-gradient(180deg, #f9c96a 0%, #d88a30 100%);
+  border: 2px solid #8b5a2b;
+  border-radius: 8px;
+  padding: 6px 22px;
+  color: #6b1a0c;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+.modal-close {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #f9c96a 0%, #d88a30 100%);
+  border: 2px solid #8b5a2b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  color: #6b1a0c;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.modal-body {
+  background: rgba(255,250,230,0.5);
+  border: 1px solid rgba(139,90,43,0.3);
+  border-radius: 8px;
+  padding: 16px 14px;
+}
+
+.section-title {
+  text-align: center;
+  color: #8b5a2b;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 12px 0 10px;
+  position: relative;
+}
+
+.section-title::before,
+.section-title::after {
+  content: "◆";
+  color: #b8894a;
+  font-size: 10px;
+  margin: 0 10px;
+  vertical-align: 2px;
+}
+
+.section-title:first-child {
+  margin-top: 0;
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.option-row:active {
+  background: rgba(184,137,74,0.15);
+}
+
+.radio {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #a57141 0%, #6b3e1a 70%);
+  border: 2px solid #8b5a2b;
+  margin-right: 12px;
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: inset -1px -1px 2px rgba(0,0,0,0.3);
+}
+
+.option-row.selected .radio {
+  background: radial-gradient(circle at 35% 35%, #7ed957 0%, #3ba82c 70%);
+  border-color: #2d7a1e;
+}
+
+.option-label {
+  font-size: 16px;
+  color: #4a2c1a;
+  font-weight: 500;
+}
+
+.order-row {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 6px;
+}
+
+.order-row .option-row {
+  flex: 1;
+  justify-content: center;
+}
+
+.mode-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 12px 8px;
+  border: 2px solid #b8894a;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fff4d6 0%, #e8c080 100%);
+  color: #6b3e1a;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.mode-btn.active {
+  background: linear-gradient(180deg, #7ed957 0%, #3ba82c 100%);
+  border-color: #2d7a1e;
+  color: #fff;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.start-btn {
+  display: block;
+  margin: 20px auto 0;
+  padding: 12px 36px;
+  background: linear-gradient(180deg, #ffd96a 0%, #e89530 100%);
+  border: 2px solid #8b5a2b;
+  border-radius: 26px;
+  color: #6b1a0c;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.25), inset 0 -2px 4px rgba(139,90,43,0.3);
+}
+
+.start-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25), inset 0 -1px 2px rgba(139,90,43,0.3);
+}
+
+/* 结果弹窗 */
+.result-modal {
+  text-align: center;
+}
+
+.result-text {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 20px 0;
+  color: #6b1a0c;
+}
+
+.result-sub {
+  font-size: 14px;
+  color: #8b5a2b;
+  margin-bottom: 8px;
+}
+
+.result-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.result-btns .start-btn {
+  margin: 0;
+  padding: 10px 20px;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.result-btns .secondary {
+  background: linear-gradient(180deg, #fff4d6 0%, #e8c080 100%);
+  color: #6b3e1a;
+}
+
+/* 提示 toast */
+.toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+/* 小屏幕适配 */
+@media (max-height: 600px) {
+  .info-bar {
+    padding: 6px 12px;
+  }
+  .avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+  }
+  .player-name {
+    font-size: 13px;
+  }
+  .ctrl-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 11px;
+  }
+  .ctrl-btn .icon {
+    font-size: 18px;
+  }
+  .control-bar {
+    padding: 6px 12px 10px;
+  }
+}
+
+/* 大屏幕 - 桌面端：让 app 居中并限制宽度 */
+@media (min-width: 700px) and (min-height: 700px) {
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+  }
+  #app {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    max-width: 500px;
+    background: rgba(255,255,255,0.06);
+    box-shadow: 0 0 40px rgba(0,0,0,0.25);
+  }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- 信息栏 -->
+  <div class="info-bar">
+    <div class="player-card" id="playerLeft">
+      <div class="avatar" id="leftAvatar">🙂</div>
+      <div class="player-name" id="leftName">玩家</div>
+    </div>
+    <div class="turn-indicator">
+      <span class="turn-arrow left" id="arrowLeft">◀</span>
+      <div class="turn-stone black" id="turnStone"></div>
+      <span class="turn-arrow right" id="arrowRight" style="display:none">▶</span>
+    </div>
+    <div class="player-card right" id="playerRight">
+      <div class="avatar" id="rightAvatar">🤖</div>
+      <div class="player-name" id="rightName">电脑</div>
+    </div>
+  </div>
+
+  <!-- 棋盘 -->
+  <div class="board-container">
+    <div class="board-wrap">
+      <canvas id="board"></canvas>
+    </div>
+  </div>
+
+  <!-- 控制按钮 -->
+  <div class="control-bar">
+    <button class="ctrl-btn" id="btnExit">
+      <span class="icon">🚪</span>
+      <span>退出</span>
+    </button>
+    <button class="ctrl-btn" id="btnUndo">
+      <span class="icon">↩</span>
+      <span>悔棋</span>
+    </button>
+    <button class="ctrl-btn" id="btnRestart">
+      <span class="icon">⟳</span>
+      <span>重玩</span>
+    </button>
+    <button class="ctrl-btn" id="btnSettings">
+      <span class="icon">⚙</span>
+      <span>设置</span>
+    </button>
+  </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="overlay" id="setupOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">游戏设置</div>
+    </div>
+    <div class="modal-close" id="setupClose">✕</div>
+    <div class="modal-body">
+      <div class="section-title">游戏模式</div>
+      <div class="mode-row">
+        <div class="mode-btn active" data-mode="pve">人机对战</div>
+        <div class="mode-btn" data-mode="pvp">两人对战</div>
+      </div>
+
+      <div id="pveOptions">
+        <div class="section-title">难度选择</div>
+        <div class="option-row selected" data-diff="easy">
+          <div class="radio"></div>
+          <div class="option-label">初出茅庐</div>
+        </div>
+        <div class="option-row" data-diff="medium">
+          <div class="radio"></div>
+          <div class="option-label">登堂入室</div>
+        </div>
+        <div class="option-row" data-diff="hard">
+          <div class="radio"></div>
+          <div class="option-label">炉火纯青</div>
+        </div>
+
+        <div class="section-title">选择先后手</div>
+        <div class="order-row">
+          <div class="option-row selected" data-order="first">
+            <div class="radio"></div>
+            <div class="option-label">先手</div>
+          </div>
+          <div class="option-row" data-order="second">
+            <div class="radio"></div>
+            <div class="option-label">后手</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="start-btn" id="btnStart">开始游戏</button>
+  </div>
+</div>
+
+<!-- 结果弹窗 -->
+<div class="overlay" id="resultOverlay">
+  <div class="modal result-modal">
+    <div class="modal-header">
+      <div class="modal-title">对局结束</div>
+    </div>
+    <div class="result-text" id="resultText">胜利！</div>
+    <div class="result-sub" id="resultSub"></div>
+    <div class="result-btns">
+      <button class="start-btn secondary" id="btnResultSettings">设置</button>
+      <button class="start-btn" id="btnResultRestart">再来一局</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="game.js"></script>
+</body>
+</html>
