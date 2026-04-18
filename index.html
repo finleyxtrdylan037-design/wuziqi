@@ -51,7 +51,7 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 12px;
+  padding: 6px 10px;
   gap: 8px;
   flex-shrink: 0;
 }
@@ -147,9 +147,9 @@ html, body {
 .board-container {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 8px;
+  padding: 4px;
   min-height: 0;
   position: relative;
 }
@@ -157,11 +157,14 @@ html, body {
 .board-wrap {
   position: relative;
   background: linear-gradient(135deg, #e8c789 0%, #d4a860 100%);
-  border: 3px solid #8b5a2b;
-  border-radius: 8px;
-  padding: 4%;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 0 20px rgba(139,90,43,0.15);
+  border: 2px solid #8b5a2b;
+  border-radius: 4px;
+  padding: 0;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
   aspect-ratio: 1;
+  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 #board {
@@ -176,7 +179,7 @@ html, body {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 10px 12px 14px;
+  padding: 6px 12px 10px;
   gap: 8px;
   flex-shrink: 0;
 }
